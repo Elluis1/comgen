@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eef2f5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)">
+  <title>Comgen</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+  <header class="site-header">
+    <div class="bar">
+      <div class="brand">
+        <p class="mark">Σ · δ · q₀</p>
+        <h1>Comgen</h1>
+        <p class="sub">Del enunciado al archivo de JFLAP. Divisibilidad, paridad, longitud y «termina / empieza / contiene» se arman en código; si no, lo mira Ollama.</p>
+      </div>
+      <div class="status-block">
+        <p id="status" class="status" role="status">Comprobando Ollama…</p>
+        <p id="memory" class="memory-note">Memoria compartida: 0 soluciones</p>
+      </div>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <section class="panel" aria-labelledby="titulo-enunciado">
+      <div class="panel-head">
+        <div class="panel-title">
+          <p class="kicker">Entrada</p>
+          <h2 id="titulo-enunciado">Enunciado</h2>
+        </div>
+        <button id="fresh" type="button" class="secondary" aria-describedby="fresh-hint">Nuevo autómata</button>
+        <span id="fresh-hint" class="sr">Borra la conversación y el autómata de esta sesión.</span>
+      </div>
+      <div id="examples" class="examples" role="group" aria-label="Ejemplos"></div>
+      <div id="log" class="log" aria-live="polite"></div>
+      <form id="composer">
+        <label class="sr" for="prompt">Descripción del lenguaje</label>
+        <textarea id="prompt" rows="3" placeholder="Un AFD sobre {0, 1} que acepte los números binarios divisibles por 5" aria-describedby="prompt-hint"></textarea>
+        <div class="composer-actions">
+          <p id="prompt-hint" class="field-hint">Enter envía. Mayús+Enter agrega una línea.</p>
+          <button id="send" type="submit">Generar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-automata">
+      <div class="panel-head">
+        <div class="panel-title">
+          <p class="kicker">Resultado</p>
+          <h2 id="titulo-automata">Autómata</h2>
+        </div>
+        <div class="actions" role="group" aria-label="Acciones del autómata" aria-describedby="accion-guia">
+          <button id="determinize" type="button" class="secondary" disabled title="Primero tiene que haber un autómata">Determinizar</button>
+          <button id="regex" type="button" class="secondary" disabled title="Primero tiene que haber un autómata">Expresión</button>
+          <button id="grammar" type="button" class="secondary" disabled title="Primero tiene que haber un autómata">Gramática</button>
+          <button id="download" type="button" disabled>Descargar .jff</button>
+          <button id="remember" type="button" class="secondary" disabled>Guardar en memoria</button>
+        </div>
+      </div>
+      <p id="accion-guia" class="accion-guia is-vacio" role="status">Elegí un ejemplo o escribí el enunciado. Ahí se habilitan Determinizar, Expresión, Gramática y la descarga.</p>
+      <div id="machine" class="machine" aria-live="polite">
+        <div class="empty-state">
+          <p class="empty-title">Sin autómata</p>
+          <p class="empty">Todavía no hay un autómata. Escribí un enunciado o cargá un ejemplo.</p>
+        </div>
+      </div>
+      <form id="runner" class="runner" hidden>
+        <fieldset class="run-mode">
+          <legend>Modo de prueba</legend>
+          <div class="mode-options">
+            <label class="mode-option">
+              <input type="radio" name="run-mode" value="rapida" checked>
+              <span>Prueba rápida</span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="run-mode" value="lenta">
+              <span>Prueba lenta</span>
+            </label>
+          </div>
+        </fieldset>
+        <p id="run-mode-hint" class="field-hint">La rápida da el resultado al toque, con la lista de pasos. La lenta recorre la cadena símbolo por símbolo.</p>
+        <label for="word">Probar una cadena</label>
+        <p id="word-hint" class="field-hint">Si dejás el campo vacío, se prueba la cadena vacía.</p>
+        <div id="probes" class="probes" hidden></div>
+        <div class="runner-row">
+          <input id="word" type="text" autocomplete="off" spellcheck="false" placeholder="0101" aria-describedby="word-hint run-mode-hint run-result playback-live">
+          <button type="submit">Simular</button>
+        </div>
+        <p id="playback-live" class="sr" aria-live="polite" aria-atomic="true"></p>
+        <div id="playback" class="playback" hidden>
+          <p class="playback-title">Paso a paso</p>
+          <p id="tape-label" class="playback-kicker">Cinta</p>
+          <div id="tape" class="tape" role="group" aria-labelledby="tape-label"></div>
+          <p id="playback-step" class="playback-step"></p>
+          <p id="playback-verdict" class="playback-verdict" hidden></p>
+          <div class="playback-controls" role="group" aria-label="Controles de la prueba lenta">
+            <button type="button" id="play-toggle" aria-pressed="false" disabled>Reproducir</button>
+            <button type="button" id="step-prev" class="secondary" disabled>Paso anterior</button>
+            <button type="button" id="step-next" class="secondary" disabled>Paso siguiente</button>
+            <button type="button" id="step-reset" class="secondary" disabled>Reiniciar</button>
+            <label class="speed" for="play-speed">
+              <span>Velocidad <span id="play-speed-value">Media</span></span>
+              <input id="play-speed" type="range" min="1" max="5" step="1" value="3" aria-valuetext="Media">
+            </label>
+          </div>
+          <p class="playback-hint">El recuadro de la cinta es el símbolo que se lee ahora; lo ya leído queda más tenue. En el dibujo se ilumina el estado y la flecha que se toma. En la tabla se marca la celda de δ.</p>
+        </div>
+        <p id="run-result" class="run-result" role="status"></p>
+        <div id="run-steps-wrap" class="run-steps-wrap" hidden>
+          <ol id="run-steps" class="run-steps" aria-label="Pasos de la simulación"></ol>
+        </div>
+        <p id="run-hint" class="run-hint" hidden></p>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="titulo-cinta">
+      <div class="panel-head">
+        <div class="panel-title">
+          <p class="kicker">Una cinta</p>
+          <h2 id="titulo-cinta">Máquina de Turing</h2>
+        </div>
+      </div>
+      <p class="field-hint">Cargá un archivo .jff de una cinta. Al simular se ve la cinta, el cabezal y el estado. Si hay muchos pasos, se ven el arranque y el final. No usa Ollama.</p>
+      <form id="turing-loader">
+        <p class="file-caption">Archivo .jff</p>
+        <div class="runner-row">
+          <input id="turing-file" class="sr" type="file" accept=".jff,.xml,application/xml,text/xml">
+          <label for="turing-file" class="file-label">Elegir archivo</label>
+          <span id="turing-file-name">Ningún archivo elegido</span>
+          <button type="submit">Cargar máquina</button>
+        </div>
+      </form>
+      <p id="turing-status" class="field-hint" role="status"></p>
+      <form id="turing-runner" hidden>
+        <label for="turing-word">Probar una cadena en la cinta</label>
+        <p id="turing-word-hint" class="field-hint">Si dejás el campo vacío, se prueba la cadena vacía. El blanco se muestra como ␣.</p>
+        <div class="runner-row">
+          <input id="turing-word" type="text" autocomplete="off" spellcheck="false" placeholder="ab" aria-describedby="turing-word-hint turing-result">
+          <button type="submit">Simular máquina</button>
+        </div>
+      </form>
+      <p id="turing-result" class="run-result" role="status"></p>
+      <div id="turing-steps-wrap" class="run-steps-wrap" hidden>
+        <ol id="turing-steps" class="run-steps" aria-label="Pasos de la cinta"></ol>
+      </div>
+    </section>
+  </main>
+  <script src="/static/delta.js"></script>
+  <script src="/static/diagram.js"></script>
+  <script src="/static/trace.js"></script>
+  <script src="/static/grammar_view.js"></script>
+  <script src="/static/playback.js"></script>
+  <script src="/static/word_hint.js"></script>
+  <script src="/static/card.js"></script>
+  <script src="/static/guia.js"></script>
+  <script src="/static/cinta.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

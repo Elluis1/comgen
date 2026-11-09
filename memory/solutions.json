@@ -1,0 +1,107 @@
+{
+  "solutions": [
+    {
+      "id": "52aa5c7e485d4231b1376e860c9ae867",
+      "request": "quiero un afd, que comience por c siga por aa* y luego termine con c*",
+      "tokens": [
+        "aa*",
+        "c*",
+        "comience",
+        "luego",
+        "siga",
+        "termine"
+      ],
+      "pattern": "caa*c*",
+      "explanation": "Expresión caa*c*.\nCada símbolo obligatorio antes de una estrella tiene su propio estado de verificación. El bucle de la estrella queda en el último de esos estados.\n\nq0: Estado inicial. Todavía no se leyó ningún símbolo.\nq1: Verifica la primera c de c.\nq2: Lee las a de más de aa* y verifica la primera a de aa*. Es estado final.\nq3: Lee las c de c*; puede no haber ninguna. Es estado final.\nqh: Pozo. Lo que se sale del patrón cae acá y la cadena se rechaza.",
+      "automaton": {
+        "kind": "fa",
+        "deterministic": true,
+        "alphabet": [
+          "c",
+          "a"
+        ],
+        "states": [
+          {
+            "id": "q0",
+            "initial": true,
+            "final": false
+          },
+          {
+            "id": "q1",
+            "initial": false,
+            "final": false
+          },
+          {
+            "id": "q2",
+            "initial": false,
+            "final": true
+          },
+          {
+            "id": "q3",
+            "initial": false,
+            "final": true
+          },
+          {
+            "id": "qh",
+            "initial": false,
+            "final": false
+          }
+        ],
+        "transitions": [
+          {
+            "from": "q0",
+            "to": "q1",
+            "read": "c"
+          },
+          {
+            "from": "q0",
+            "to": "qh",
+            "read": "a"
+          },
+          {
+            "from": "q1",
+            "to": "qh",
+            "read": "c"
+          },
+          {
+            "from": "q1",
+            "to": "q2",
+            "read": "a"
+          },
+          {
+            "from": "q2",
+            "to": "q3",
+            "read": "c"
+          },
+          {
+            "from": "q2",
+            "to": "q2",
+            "read": "a"
+          },
+          {
+            "from": "q3",
+            "to": "q3",
+            "read": "c"
+          },
+          {
+            "from": "q3",
+            "to": "qh",
+            "read": "a"
+          },
+          {
+            "from": "qh",
+            "to": "qh",
+            "read": "c"
+          },
+          {
+            "from": "qh",
+            "to": "qh",
+            "read": "a"
+          }
+        ],
+        "description": "Expresión caa*c*"
+      },
+      "created_at": "2026-10-12T16:13:57.991063+00:00"
+    }
+  ]
+}
